@@ -80,54 +80,84 @@ Sometimes we want the overriding method to reuse
 the implementation defined in the superclass.  
 We can use the keyword `super` to invoke the method implemented in the superclass.
 
-![product uml](https://curriculum-content.s3.amazonaws.com/6677/pillars/product_uml.png)
+![product class hierarchy](https://curriculum-content.s3.amazonaws.com/6677/pillars/product_class_hierarchy.png)
 
-As a simple example, consider the `Product` class:
+As an example, consider the `Product` class hierarchy:
 
 ```java
 public class Product {
-    public String getName() { return "Widget";}
-    public double getPrice() { return 75.0;}
+  public String getName() { return "Widget";}
+  public double getPrice() { return 80.0;}
 }
 ```
-
-We'll create a subclass `DiscountProduct` that overrides both methods
-by invoking the methods of the superclass `Product`:
 
 ```java
-public class DiscountProduct extends Product {
-    @Override
-    public String getName() {
-        return "Discount " + super.getName();   // Discount Widget
-    }
-
-    @Override
-    public double getPrice() {
-        return super.getPrice() * 0.90;        //75.0 * 0.9
-    }
+public class NonreturnableProduct extends Product {
+  @Override
+  public String getName() {return super.getName() + "-nonreturnable";}  //Widget-nonreturnable
 }
 ```
 
-The `main()` method creates `Product` and `DiscountProduct` objects and calls their methods:
+- The `NonreturnableProduct` class overrides `getName()`.
+  - `super.getName()` executes the method body defined in the `Product` class.
+- The `NonreturnableProduct` class inherits `getPrice()` from the `Product` class. 
+
+
+```java
+public class DamagedProduct extends NonreturnableProduct {
+  @Override
+  public String getName() {return super.getName()+"-damaged";} //Widget-nonreturnable-damaged
+
+  @Override
+  public double getPrice() {return super.getPrice() * 0.5;}    //80 * 0.5 = 40
+}
+```
+
+- The `DamagedProduct` class overrides `getName()`.
+  - `super.getName()` executes the method body defined in `NonreturnableProduct`.
+- The `DamagedProduct` class overrides `getPrice()`.
+  - `super.getPrice()` executes the method body defined in `Product` (since `NonreturnableProduct` inherits it from `Product`).
+
+The `main()` method creates instances of each class and calls the methods:
 
 ```java
 public class Main {
-    public static void main(String[] args) {
-        Product product1 = new Product();
-        System.out.println(product1.getName() + " costs $" + product1.getPrice());
 
-        DiscountProduct product2 = new DiscountProduct();
-        System.out.println(product2.getName() + " costs $" + product2.getPrice());
-    }
+  public static void printInfo(Product p) {
+    System.out.println(p.getName() + " costs $" + p.getPrice());
+  }
+  public static void main(String[] args) {
+    printInfo(new Product());
+    printInfo(new NonreturnableProduct());
+    printInfo(new DamagedProduct());
+  }
 }
 ```
 
 The program prints:
 
 ```text
-Widget costs $75.0
-Discount Widget costs $67.5
+Widget costs $80.0
+Widget-nonreturnable costs $80.0
+Widget-nonreturnable-damaged costs $40.0
 ```
+
+### Why can't we write `super.super.m()` to call an inherited method?
+
+A common error is to attempt to use the reference `super.super` to access a member of a grandparent
+class (i.e. the parent of a parent class). We would get a compiler error if we tried to
+write `super.super.getPrice()`  or `super.super.getName()` within a method of the `DamagedProduct` class.
+
+As we saw in the `getPrice()` method implemented in the `DamagedProduct` class,
+we can simply write `super.getPrice()` to execute the method implemented in `Product` because
+the `NonreturnableProduct` class inherits and does not override it.
+
+Once a child class overrides a method from a parent class, descendants of the child class
+can't access the original parent's implementation.  That is why methods in `DamagedProduct`
+can't use the expression `super.super.getName()` to execute the method body defined in `Product`.
+The `DamagedProduct` class is restricted to executing methods inherited from its immediate
+parent `NonreturnableProduct`, which include the `getPrice()` inherited from `Product` and the `getName()`
+overriden in `NonreturnableProduct`.
 
 ## Calling An Overriden Interface Method
 
